@@ -24,15 +24,22 @@ jobs:
         run: npm run build
         working-directory: roqore-nestjs/backend
 
+      - name: Write SSH key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+          chmod 600 key.pem
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_IP }}
           username: devuser
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: key.pem      # <-- use key_path here
+          port: 22
           script: |
             cd ~/roqore-nestJs/roqore-nestjs/backend
             git pull origin dev
             npm install
             npm run build
             pm2 reload ecosystem.config.js --env production
+
