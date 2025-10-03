@@ -1,0 +1,38 @@
+name: Deploy NestJS
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: roqore-nestjs/backend
+
+      - name: Build
+        run: npm run build
+        working-directory: roqore-nestjs/backend
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/roqore-nestJs/roqore-nestjs/backend
+            git pull origin dev
+            npm install
+            npm run build
+            pm2 reload ecosystem.config.js --env production
